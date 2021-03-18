@@ -1,0 +1,36 @@
+---
+title: "Project 2"
+author: "Anneliese Welsh"
+date: "3/15/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+```
+```{r, include = FALSE}
+bbdw <- read_excel('bbdw.xlsx')
+```
+
+
+```{r, include=FALSE}
+head(bbdw0)
+```
+
+```{r}
+bbdw0 <- read_excel('bbdw.xlsx', sheet='COMB_PHILGIFT_SAMPLE')
+```
+
+```{r}
+x <- bbdw0 %>% filter(GIFTYEAR>=2017)
+dim(bbdw0)
+dim(x)
+```
+- Parse all words/phrases under WPPHILANTHROPICGIFTCATEGORY. sep=',' or '&'
+- 
+```{r}
+
+```
+

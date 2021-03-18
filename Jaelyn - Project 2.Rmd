@@ -1,0 +1,100 @@
+---
+title: "Project 2"
+author: "Anneliese Welsh"
+date: "3/15/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(readr)
+library(packcircles)
+library(viridis)
+```
+
+```{r}
+
+bbdw <- read_excel("bbdw.xlsx",sheet = "COMB_PHILGIFT_SAMPLE")
+
+gifts <- read_csv('gifts.csv')
+
+##MERGING 
+## tidyverse dplyr version of merge, faster and it's more like SQL
+## we only have the first 10,000 rows of the old dataset, so we just want anything from there that matches, so inner
+
+## there are matches for the constituent IDs but only about 500
+## If we use REVENUEDONOR_CONSTITUENTDIMID it's also about 500
+gifts.bbdw.c <- inner_join(bbdw,gifts,by=c('CONSTITUENTDIMID'='RECOGNITIONDONOR_CONSTITUENTDIMID')) # might also be 'ConstituentLookupID' for right ID in merged old dataset
+
+## There are 120k matches here!
+## If we use RECOGNITIONDONOR_HOUSEHOLDCOMPOUNDLOOKUPID
+## These are matched by the same household
+gifts.bbdw.h <- inner_join(bbdw,gifts,by=c("HOUSEHOLDID"="RECOGNITIONDONOR_HOUSEHOLDCOMPOUNDLOOKUPID"))
+glimpse(gifts.bbdw.h)
+
+```
+
+```{r}
+##2005 data:
+filteredYear = bbdw %>% filter(GIFTYEAR<=2005)
+
+
+##who's donating?
+giftPerName = as.data.frame(table(filteredYear$NAME))
+
+
+##who
+giftPerName %>% ggplot(aes(Var1,Freq))+
+  geom_bar(stat ="identity")+
+  theme(axis.text.x = element_text(angle = 45, hjust= 1))
+
+
+```
+
+```{r}
+##packing circles
+# Generate the layout
+packing <- circleProgressiveLayout(bbdw$GIFTYEAR, sizetype='area')
+packing$radius <- 0.95*packing$radius
+dataPack <- cbind(bbdw, packing)
+dat.gg <- circleLayoutVertices(packing, npoints=50)
+
+# Plot ##tried to see which year had the greatest number of donations visually, didn't work out bc i grouped this by id 
+ggplot() + 
+  geom_polygon(data = dat.gg, aes(x, y, group = id, fill=id), colour = "black", alpha = 0.6) +
+  scale_fill_viridis() +
+  geom_text(data = dataPack, aes(x, y, size=HI_VALUE, label = GIFTYEAR), color="black") +
+  theme_void() + 
+  theme(legend.position="none")+ 
+  coord_equal()
+```
+
+
+```{r}
+
+##state: 
+plotData = as.data.frame(table(bbdw$MATCHSTATE))
+plotData %>%top_n(11) %>% ggplot(aes(reorder(Var1,-Freq),Freq))+
+  geom_bar(stat ="identity")+
+  theme(axis.text.x = element_text(angle = 45, hjust= 1))
+
+##CITY
+plotData = as.data.frame(table(bbdw$MATCHCITY))
+topData=plotData %>%mutate(Var1=tolower(Var1))
+
+topData%>%top_n(10)%>%ggplot(aes(reorder(Var1,-Freq),Freq))+
+  geom_bar(stat ="identity")+
+  theme(axis.text.x = element_text(angle = 45, hjust= 1))
+```
+
+```{r}
+topData %>% top_n(10)%>%
+  arrange(desc(Freq)) %>%
+  ggplot(aes(x=Var1, y=Freq, size = Freq,color=Var1)) +
+    geom_point(alpha=0.5) 
+```
+
